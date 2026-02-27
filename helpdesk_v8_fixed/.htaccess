@@ -1,0 +1,35 @@
+Options -Indexes
+RewriteEngine On
+
+# ── Security Headers ─────────────────────────────────────────
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# ── Block akses langsung ke includes/ ───────────────────────
+RewriteRule ^includes/ - [F,L]
+
+# ── Block file .sql & .env ───────────────────────────────────
+<FilesMatch "\.(sql|env|log|sh|bak)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# ── Block PHP execution di uploads/ ─────────────────────────
+<FilesMatch "^assets/uploads/.*\.(php|phtml|php3|php4|php5|pl|py|jsp|asp|sh|cgi)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# ── Redirect: hapus .php dari URL (301) ─────────────────────
+RewriteCond %{THE_REQUEST} \s/+(.+?)\.php([?\s]) [NC]
+RewriteRule ^ /%1%2 [R=301,L,NE,QSA]
+
+# ── Clean URL: tambahkan .php jika file ada ──────────────────
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^([^.]+)$ $1.php [L,QSA]
